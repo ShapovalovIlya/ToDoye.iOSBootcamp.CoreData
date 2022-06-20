@@ -7,23 +7,18 @@
 //
 
 import UIKit
+import CoreData
 
 class ToDoListViewController: UITableViewController {
     
     var itemArray = [Item]()
-    let constants = Constant()
-//    let defaults = UserDefaults.standard
+    private let constants = Constant()
+    private let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
-
-
     override func viewDidLoad() {
         super.viewDidLoad()
         
         loadItems()
-//        guard let items = defaults.array(forKey: constants.userDefaultKeyForItemArray) as? [Item] else { return }
-//        itemArray = items
-        
     }
 //MARK: - tableView data source methods
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -42,9 +37,27 @@ class ToDoListViewController: UITableViewController {
     }
     
     //MARK: - tableView delegate methods
+    
+    override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
+        return true
+    }
+    
+    override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration?
+        {
+            // Write action code for the delete
+            let deleteAction = UIContextualAction(style: .normal, title:  "Delete", handler: { [weak self] (_, _, _) in
+                guard let self = self else { return }
+                self.context.delete(self.itemArray[indexPath.row])
+                self.itemArray.remove(at: indexPath.row)
+                tableView.deleteRows(at: [indexPath], with: .left)
+                self.saveItems()
+            })
+            deleteAction.backgroundColor = .red
+            return UISwipeActionsConfiguration(actions: [deleteAction])
+        }
+    
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        
-        itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        itemArray[indexPath.row].done.toggle()
         saveItems()
         tableView.deselectRow(at: indexPath, animated: true)
     }
@@ -57,9 +70,10 @@ class ToDoListViewController: UITableViewController {
         
         let alertAction = UIAlertAction(title: "Add item", style: .default) { [self] action in
             //what will happen once the user clicks the "Add item" button on UIAlert
-            let newItem = Item(title: textField.text!)
+            let newItem = Item(context: context)
+            newItem.title = textField.text
+            newItem.done = false
             itemArray.append(newItem)
-//            defaults.set(itemArray, forKey: constants.userDefaultKeyForItemArray)
             saveItems()
            }
         
@@ -73,27 +87,23 @@ class ToDoListViewController: UITableViewController {
     }
     
     private func saveItems() {
-        
-        let encoder = PropertyListEncoder()
-        
         do {
-            let data = try encoder.encode(itemArray)
-            try data.write(to: dataFilePath!)
+            try context.save()
         } catch {
-            print("Error encoding data array, \(error)")
+            print("Error saving context, \(error)")
         }
         tableView.reloadData()
         
     }
     
     private func loadItems() {
-        guard let data = try? Data(contentsOf: dataFilePath!) else { return }
-            let decoder = PropertyListDecoder()
-            do {
-                itemArray = try decoder.decode([Item].self, from: data)
-            } catch {
-                print("Error decoding data array, \(error)")
-            }
+        let request: NSFetchRequest<Item> = Item.fetchRequest()
+        do {
+            itemArray = try context.fetch(request)
+        } catch {
+            print("Error fetching data from context, \(error)")
+        }
+       
     }
     
 }
