@@ -20,11 +20,11 @@ class ToDoListViewController: UITableViewController {
         
         loadItems()
     }
-//MARK: - tableView data source methods
+    //MARK: - tableView data source methods
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         itemArray.count
     }
-
+    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: constants.cellIdentifier, for: indexPath)
         let item = itemArray[indexPath.row]
@@ -43,18 +43,29 @@ class ToDoListViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration?
-        {
-            // Write action code for the delete
-            let deleteAction = UIContextualAction(style: .normal, title:  "Delete", handler: { [weak self] (_, _, _) in
-                guard let self = self else { return }
-                self.context.delete(self.itemArray[indexPath.row])
-                self.itemArray.remove(at: indexPath.row)
-                tableView.deleteRows(at: [indexPath], with: .left)
-                self.saveItems()
-            })
-            deleteAction.backgroundColor = .red
-            return UISwipeActionsConfiguration(actions: [deleteAction])
+    {
+        // Write action for the delete
+        let deleteAction = UIContextualAction(style: .destructive, title:  "Delete", handler: { [weak self] (_, _, _) in
+            guard let self = self else { return }
+            self.context.delete(self.itemArray[indexPath.row])
+            self.itemArray.remove(at: indexPath.row)
+            tableView.deleteRows(at: [indexPath], with: .left)
+            self.saveItems()
+        })
+        return UISwipeActionsConfiguration(actions: [deleteAction])
+    }
+    
+    override func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        //Write action for the mark
+        let markAction = UIContextualAction(style: .normal, title: "Done") { [weak self] (_, _, _) in
+            guard let self = self else { return }
+            self.itemArray[indexPath.row].done.toggle()
+            self.saveItems()
+            tableView.reloadRows(at: [indexPath], with: .right)
         }
+        markAction.backgroundColor = .systemGreen
+        return UISwipeActionsConfiguration(actions: [markAction])
+    }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         itemArray[indexPath.row].done.toggle()
@@ -75,7 +86,7 @@ class ToDoListViewController: UITableViewController {
             newItem.done = false
             itemArray.append(newItem)
             saveItems()
-           }
+        }
         
         alertController.addTextField { alertTextField in
             alertTextField.placeholder = "Create new item"
@@ -103,7 +114,7 @@ class ToDoListViewController: UITableViewController {
         } catch {
             print("Error fetching data from context, \(error)")
         }
-       
+        
     }
     
 }
