@@ -12,11 +12,17 @@ import CoreData
 class ToDoListViewController: UITableViewController {
     
     var itemArray = [Item]()
+    
+    //MARK: - Privat properties
     private let constants = Constant()
     private let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
+    //MARK: - Outlets
+    @IBOutlet weak var searchBar: UISearchBar!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        searchBar.delegate = self
         
         loadItems()
     }
@@ -97,6 +103,7 @@ class ToDoListViewController: UITableViewController {
         present(alertController, animated: true)
     }
     
+    //MARK: - Private methods
     private func saveItems() {
         do {
             try context.save()
@@ -107,14 +114,30 @@ class ToDoListViewController: UITableViewController {
         
     }
     
-    private func loadItems() {
-        let request: NSFetchRequest<Item> = Item.fetchRequest()
+    private func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
         do {
             itemArray = try context.fetch(request)
         } catch {
             print("Error fetching data from context, \(error)")
         }
+        tableView.reloadData()
+    }
+    
+}
+//MARK: - UISearchBarDelegate
+extension ToDoListViewController: UISearchBarDelegate {
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        // Create generic request
+        let searchRequest: NSFetchRequest<Item> = Item.fetchRequest()
+        // Create predicate for request
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        searchRequest.predicate = predicate
+        // Create sort descriptor fo requesting data.
+        let sortDescriptor = NSSortDescriptor(key: "title", ascending: true)
+        searchRequest.sortDescriptors = [sortDescriptor]
         
+        loadItems(with: searchRequest)
     }
     
 }
