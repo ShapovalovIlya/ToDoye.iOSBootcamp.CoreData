@@ -11,10 +11,9 @@ import CoreData
 
 class ToDoListViewController: UITableViewController {
     
-    var itemArray = [Item]()
-    
-    //MARK: - Privat properties
-    private let constants = Constant()
+    //MARK: - Private properties
+    private var itemArray = [ItemList]()
+    private let K = Constant()
     private let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     
     //MARK: - Outlets
@@ -26,24 +25,20 @@ class ToDoListViewController: UITableViewController {
         
         loadItems()
     }
-    //MARK: - tableView data source methods
+    //MARK: - Table View data source methods
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         itemArray.count
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: constants.cellIdentifier, for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: K.itemCellIdentifier, for: indexPath)
         let item = itemArray[indexPath.row]
-        
         cell.textLabel?.text = item.title
-        
         cell.accessoryType = item.done ? .checkmark : .none
-        
         return cell
     }
     
-    //MARK: - tableView delegate methods
-    
+    //MARK: - Table View delegate sourse methods
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         return true
     }
@@ -83,11 +78,11 @@ class ToDoListViewController: UITableViewController {
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         
         var textField = UITextField()
-        let alertController = UIAlertController(title: "Add new item", message: "", preferredStyle: .alert)
+        let alertController = UIAlertController(title: "Add new item", message: nil, preferredStyle: .alert)
         
         let alertAction = UIAlertAction(title: "Add item", style: .default) { [self] action in
             //what will happen once the user clicks the "Add item" button on UIAlert
-            let newItem = Item(context: context)
+            let newItem = ItemList(context: context)
             newItem.title = textField.text
             newItem.done = false
             itemArray.append(newItem)
@@ -111,10 +106,9 @@ class ToDoListViewController: UITableViewController {
             print("Error saving context, \(error)")
         }
         tableView.reloadData()
-        
     }
     
-    private func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
+    private func loadItems(with request: NSFetchRequest<ItemList> = ItemList.fetchRequest()) {
         do {
             itemArray = try context.fetch(request)
         } catch {
@@ -129,7 +123,7 @@ extension ToDoListViewController: UISearchBarDelegate {
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         // Create generic request
-        let searchRequest: NSFetchRequest<Item> = Item.fetchRequest()
+        let searchRequest: NSFetchRequest<ItemList> = ItemList.fetchRequest()
         // Create predicate for request
         let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
         searchRequest.predicate = predicate
@@ -138,6 +132,24 @@ extension ToDoListViewController: UISearchBarDelegate {
         searchRequest.sortDescriptors = [sortDescriptor]
         
         loadItems(with: searchRequest)
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        
+        if searchBar.text?.count == 0 {
+            loadItems()
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+        } else {
+            // Note. Using search request at this method provide more comfortable seatch for user.
+            // No need to interact with "search" button on keyboard to start search.
+            let searchRequest: NSFetchRequest<ItemList> = ItemList.fetchRequest()
+            searchRequest.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+            searchRequest.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+            
+            loadItems(with: searchRequest)
+        }
     }
     
 }
