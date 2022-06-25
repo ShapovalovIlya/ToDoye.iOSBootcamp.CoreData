@@ -10,7 +10,7 @@ import Foundation
 
 struct Constant {
     let itemCellIdentifier = "ToDoItemCell"
-    let listCellIdentifier = "ToDoListCell"
+    let categoryCellIdentifier = "ToDoListCell"
     let userDefaultKeyForItemArray = "ToDoListArray"
     let goToItemsSegue = "goToItems"
 }

@@ -30,7 +30,7 @@ class CategoryViewController: UITableViewController {
     
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: K.listCellIdentifier, for: indexPath)
+        let cell = tableView.dequeueReusableCell(withIdentifier: K.categoryCellIdentifier, for: indexPath)
         cell.textLabel?.text = categoryArray[indexPath.row].name
         return cell
     }
@@ -41,7 +41,7 @@ class CategoryViewController: UITableViewController {
     }
     
     //MARK: - Data manipulation methods
-    private func saveItems() {
+    private func saveCategorioes() {
         do {
             try context.save()
         } catch {
@@ -68,7 +68,7 @@ class CategoryViewController: UITableViewController {
             let newList = CategoryList(context: context)
             newList.name = textField.text
             categoryArray.append(newList)
-            saveItems()
+            saveCategorioes()
         }
         
         alertController.addTextField { alertTextfield in
