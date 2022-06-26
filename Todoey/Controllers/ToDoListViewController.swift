@@ -11,6 +11,13 @@ import CoreData
 
 class ToDoListViewController: UITableViewController {
     
+    //MARK: - Public properties
+    var selectedCategory: CategoryList? {
+        didSet {
+            loadItems()
+        }
+    }
+    
     //MARK: - Private properties
     private var itemArray = [ItemList]()
     private let K = Constant()
@@ -19,11 +26,11 @@ class ToDoListViewController: UITableViewController {
     //MARK: - Outlets
     @IBOutlet weak var searchBar: UISearchBar!
     
+    //MARK: - Life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         searchBar.delegate = self
         
-        loadItems()
     }
     //MARK: - Table View data source methods
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -57,7 +64,7 @@ class ToDoListViewController: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        //Write action for the mark
+        //Write leading swipe action for the mark
         let markAction = UIContextualAction(style: .normal, title: "Done") { [weak self] (_, _, _) in
             guard let self = self else { return }
             self.itemArray[indexPath.row].done.toggle()
@@ -86,6 +93,7 @@ class ToDoListViewController: UITableViewController {
             let newItem = ItemList(context: self.context)
             newItem.title = textField.text
             newItem.done = false
+            newItem.parentCategory = self.selectedCategory
             self.itemArray.append(newItem)
             self.saveItems()
         }
@@ -109,7 +117,15 @@ class ToDoListViewController: UITableViewController {
         tableView.reloadData()
     }
     
-    private func loadItems(with request: NSFetchRequest<ItemList> = ItemList.fetchRequest()) {
+    private func loadItems(with request: NSFetchRequest<ItemList> = ItemList.fetchRequest(), predicate: NSPredicate? = nil) {
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        
+        if let aditionalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, aditionalPredicate])
+        } else {
+            request.predicate = categoryPredicate
+        }
+        
         do {
             itemArray = try context.fetch(request)
         } catch {
@@ -127,16 +143,14 @@ extension ToDoListViewController: UISearchBarDelegate {
         let searchRequest: NSFetchRequest<ItemList> = ItemList.fetchRequest()
         // Create predicate for request
         let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-        searchRequest.predicate = predicate
         // Create sort descriptor fo requesting data.
         let sortDescriptor = NSSortDescriptor(key: "title", ascending: true)
         searchRequest.sortDescriptors = [sortDescriptor]
         
-        loadItems(with: searchRequest)
+        loadItems(with: searchRequest, predicate: predicate)
     }
     
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        
         if searchBar.text?.count == 0 {
             loadItems()
             DispatchQueue.main.async {
@@ -146,10 +160,10 @@ extension ToDoListViewController: UISearchBarDelegate {
             // Note. Using search request at this method provide more comfortable seatch for user.
             // No need to interact with "search" button on keyboard to start search.
             let searchRequest: NSFetchRequest<ItemList> = ItemList.fetchRequest()
-            searchRequest.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+            let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
             searchRequest.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-            
-            loadItems(with: searchRequest)
+
+            loadItems(with: searchRequest, predicate: predicate)
         }
     }
     

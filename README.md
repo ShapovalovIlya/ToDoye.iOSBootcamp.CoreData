@@ -11,6 +11,7 @@ The objective of this tutorial is to understand how to save data in iOS. We'll l
 ## What you will create
 
 A todolist app to keep track of all your tasks.
+Stack:
 - Swift
 - UIKit
 - CoreData

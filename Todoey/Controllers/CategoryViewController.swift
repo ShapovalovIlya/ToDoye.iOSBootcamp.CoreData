@@ -36,8 +36,14 @@ class CategoryViewController: UITableViewController {
     }
     
     //MARK: - Table view Delegate
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        let destinationVC = segue.destination as! ToDoListViewController
+        guard let indexPath = tableView.indexPathForSelectedRow else { return }
+        destinationVC.selectedCategory = categoryArray[indexPath.row]
+    }
+    
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        tableView.deselectRow(at: indexPath, animated: true)
+        performSegue(withIdentifier: K.goToItemsSegue, sender: self)
     }
     // Create trailing swipe action
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
@@ -52,6 +58,7 @@ class CategoryViewController: UITableViewController {
         return UISwipeActionsConfiguration(actions: [deleteCategory])
     }
     
+    
     //MARK: - Data manipulation methods
     private func saveCategorioes() {
         do {
@@ -62,7 +69,8 @@ class CategoryViewController: UITableViewController {
         tableView.reloadData()
     }
     
-    private func loadCategories(with request: NSFetchRequest<CategoryList> = CategoryList.fetchRequest()) {
+    private func loadCategories() {
+        let request: NSFetchRequest<CategoryList> = CategoryList.fetchRequest()
         do {
             categoryArray = try context.fetch(request)
         } catch {
