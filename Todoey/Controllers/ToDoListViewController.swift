@@ -38,22 +38,22 @@ class ToDoListViewController: UITableViewController {
         return cell
     }
     
-    //MARK: - Table View delegate sourse methods
+    //MARK: - Table View delegate methods
     override func tableView(_ tableView: UITableView, canEditRowAt indexPath: IndexPath) -> Bool {
         return true
     }
     
     override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration?
     {
-        // Write action for the delete
-        let deleteAction = UIContextualAction(style: .destructive, title:  "Delete", handler: { [weak self] (_, _, _) in
+        // Write trailing swipe action for the delete
+        let deleteItem = UIContextualAction(style: .destructive, title:  "Delete", handler: { [weak self] (_, _, _) in
             guard let self = self else { return }
             self.context.delete(self.itemArray[indexPath.row])
             self.itemArray.remove(at: indexPath.row)
             tableView.deleteRows(at: [indexPath], with: .left)
             self.saveItems()
         })
-        return UISwipeActionsConfiguration(actions: [deleteAction])
+        return UISwipeActionsConfiguration(actions: [deleteItem])
     }
     
     override func tableView(_ tableView: UITableView, leadingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
@@ -80,13 +80,14 @@ class ToDoListViewController: UITableViewController {
         var textField = UITextField()
         let alertController = UIAlertController(title: "Add new item", message: nil, preferredStyle: .alert)
         
-        let alertAction = UIAlertAction(title: "Add item", style: .default) { [self] action in
+        let alertAction = UIAlertAction(title: "Add item", style: .default) { [weak self] action in
+            guard let self = self else { return }
             //what will happen once the user clicks the "Add item" button on UIAlert
-            let newItem = ItemList(context: context)
+            let newItem = ItemList(context: self.context)
             newItem.title = textField.text
             newItem.done = false
-            itemArray.append(newItem)
-            saveItems()
+            self.itemArray.append(newItem)
+            self.saveItems()
         }
         
         alertController.addTextField { alertTextField in

@@ -39,6 +39,18 @@ class CategoryViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
     }
+    // Create trailing swipe action
+    override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let deleteCategory = UIContextualAction(style: .destructive, title: "Delete") { [weak self] (_, _, _) in
+            guard let self = self else { return }
+            self.context.delete(self.categoryArray[indexPath.row])
+            self.categoryArray.remove(at: indexPath.row)
+            tableView.deleteRows(at: [indexPath], with: .left)
+            self.saveCategorioes()
+                
+        }
+        return UISwipeActionsConfiguration(actions: [deleteCategory])
+    }
     
     //MARK: - Data manipulation methods
     private func saveCategorioes() {
@@ -64,11 +76,12 @@ class CategoryViewController: UITableViewController {
         
         var textField = UITextField()
         let alertController = UIAlertController(title: "Add new category", message: nil, preferredStyle: .alert)
-        let alertAction = UIAlertAction(title: "Add list", style: .default) { [self] action in
-            let newList = CategoryList(context: context)
+        let alertAction = UIAlertAction(title: "Add list", style: .default) { [weak self] action in
+            guard let self = self else { return }
+            let newList = CategoryList(context: self.context)
             newList.name = textField.text
-            categoryArray.append(newList)
-            saveCategorioes()
+            self.categoryArray.append(newList)
+            self.saveCategorioes()
         }
         
         alertController.addTextField { alertTextfield in
